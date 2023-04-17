@@ -20,9 +20,9 @@ public class ChainPrinter implements Printer {
     @Override
     public void println(String line) {
 
-//        if(!line.matches("[0-9]+")) {
-//            throw new IllegalArgumentException("The line can only contains numbers");
-//        }
+        if(!line.matches("^[0-1]+$")) {
+            throw new IllegalArgumentException("The line can only contains digits '0' or '1'");
+        }
 
         int s1 = 0;
         int s2;

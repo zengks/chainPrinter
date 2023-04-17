@@ -20,15 +20,16 @@ public class ChainPrinter implements Printer {
     @Override
     public void println(String line) {
 
-        if(!line.matches("[0-9]+")) {
-            throw new IllegalArgumentException("The line can only contains numbers");
-        }
+//        if(!line.matches("[0-9]+")) {
+//            throw new IllegalArgumentException("The line can only contains numbers");
+//        }
+
+        int s1 = 0;
+        int s2;
+        char startDigit = line.charAt(0);
 
         LinkedHashSet<Integer> matched_set = new LinkedHashSet<>();
         LinkedHashSet<Integer> unMatched_set = new LinkedHashSet<>();
-        char startDigit = line.charAt(0);
-        int s1 = 0;
-        int s2;
 
         do{
             s2 = s1 + PRINT_HAMMER_GAP_IN_MILLIMETER;
@@ -94,8 +95,8 @@ public class ChainPrinter implements Printer {
 
     @Override
     public void dprintln(String line) {
-        // REPLACE THIS WITH YOUR CODE
-//        println(line);
+       String d_line = line.replaceAll("[2-9]", "0");
+       println(d_line);
     }
 
     @Override

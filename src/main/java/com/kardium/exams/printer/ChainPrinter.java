@@ -119,6 +119,7 @@ public class ChainPrinter implements Printer {
         ArrayList<HashMap> targetSols = new ArrayList<>();
 
         // Create 8 solenoids objects to represent each solenoid
+        // Create 8 value objects to determine the final printing order
         for(int i=0; i<TOTAL_NUM_OF_SOLENOIDS; i++) {
             HashMap<String, Integer> solenoid = new HashMap<>();
             HashMap<String, Integer> targetSol = new HashMap<>();
@@ -134,7 +135,8 @@ public class ChainPrinter implements Printer {
             targetSols.add(targetSol);
         }
 
-        //Initialize 8 solenoid with their initial values
+        // Initialize 8 solenoid with their initial values
+        // Assume the first solenoid is aligned dead-center with the hammer with '0' state
         for(HashMap sol: solenoids) {
             int index = (int) sol.get("sol_index");
             if(index == 0) {
@@ -185,7 +187,7 @@ public class ChainPrinter implements Printer {
 
         int prevPosCounter = 1;
 
-        // Target sols array analysis
+        // Traverse through the given input line and determine what the final target values should be for the solenoids.
         for(int i=1; i<line.length(); i++) {
             HashMap curSol = targetSols.get(i);
             int parsedInt = Integer.parseInt(String.valueOf(line.charAt(i)));
@@ -218,6 +220,7 @@ public class ChainPrinter implements Printer {
 
         while(resultLength < line.length()) {
 
+            // Check which solenoids match the targeted values.
             for(int i=0; i<line.length(); i++) {
                 HashMap currentSol = solenoids.get(i);
                 HashMap currentTarget = targetSols.get(i);
@@ -241,6 +244,7 @@ public class ChainPrinter implements Printer {
 
             driver.step();
 
+            // After stepper moves 1mm to the left, adjust values corresponding to each solenoid.
             for(int i=0; i<solenoids.size(); i++) {
                 HashMap currentSol = solenoids.get(i);
                 int counter = (int) currentSol.get("positionCounter");
@@ -266,7 +270,6 @@ public class ChainPrinter implements Printer {
             driver.linefeed();
         }
 
-        System.out.println(Arrays.stream(result).mapToObj(String::valueOf).collect(Collectors.joining("")));
         return Arrays.stream(result).mapToObj(String::valueOf).collect(Collectors.joining(""));
     }
 }

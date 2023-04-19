@@ -266,6 +266,7 @@ public class ChainPrinter implements Printer {
             driver.linefeed();
         }
 
+        System.out.println(Arrays.stream(result).mapToObj(String::valueOf).collect(Collectors.joining("")));
         return Arrays.stream(result).mapToObj(String::valueOf).collect(Collectors.joining(""));
     }
 }

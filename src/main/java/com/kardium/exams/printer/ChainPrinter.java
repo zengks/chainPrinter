@@ -4,13 +4,15 @@ package com.kardium.exams.printer;
  * Copyright Kardium Inc. 2023.
  */
 
-import java.util.LinkedHashSet;
+import java.util.*;
 
 /**
  * Fill out this class to implement the {@link Printer} interface.
  */
 public class ChainPrinter implements Printer {
-    public static final int PRINT_HAMMER_GAP_IN_MILLIMETER = 4;
+    private static final int PRINT_HAMMER_GAP_IN_MILLIMETER = 4;
+    private static final int TOTAL_NUM_OF_SOLENOIDS = 8;
+    private static final int SUCCESSIVE_ONES_GAP_IN_MILLIMETER = 2;
     private final ChainPrinterDriver driver;
 
     public ChainPrinter(ChainPrinterDriver driver) {
@@ -95,13 +97,163 @@ public class ChainPrinter implements Printer {
 
     @Override
     public void dprintln(String line) {
-       String d_line = line.replaceAll("[2-9]", "0");
-       println(d_line);
+       StringBuilder d_line = new StringBuilder();
+       for(int i=0; i < 8 && i<line.length(); i++) {
+           char c = line.charAt(i);
+           if(c == '0' || c == '1' || c == ' ') {
+               d_line.append(c);
+           }else{
+               d_line.append('0');
+           }
+       }
+       System.out.println(d_line.toString());
+       println(d_line.toString());
     }
 
     @Override
-    public void pprintln(String line) {
-        // REPLACE THIS WITH YOUR CODE
-//        println(line);
+    public String pprintln(String line) {
+
+        ArrayList<HashMap> solenoids = new ArrayList<>();
+        ArrayList<HashMap> targetSols = new ArrayList<>();
+
+        // Create 8 solenoids objects to represent each solenoid
+        for(int i=0; i<TOTAL_NUM_OF_SOLENOIDS; i++) {
+            HashMap<String, Integer> solenoid = new HashMap<>();
+            HashMap<String, Integer> targetSol = new HashMap<>();
+            solenoid.put("sol_index", i);
+            solenoid.put("positionCounter", 1);
+            solenoid.put("value", 0);
+            solenoid.put("self_count", 0);
+            solenoids.add(solenoid);
+
+            targetSol.put("targetSolenoid", i);
+            targetSol.put("targetPositionCounter", 1);
+            targetSol.put("targetValue", Integer.parseInt(String.valueOf(line.charAt(i))));
+            targetSols.add(targetSol);
+        }
+
+        //Initialize 8 solenoid with their initial values
+        for(HashMap sol: solenoids) {
+            int index = (int) sol.get("sol_index");
+            if(index == 0) {
+                sol.put("positionCounter", 1);
+                sol.put("value", 0);
+                sol.put("self_count", 2);
+            }
+            if(index == 1) {
+                sol.put("positionCounter", 2);
+                sol.put("value", 1);
+                sol.put("self_count", 1);
+            }
+            if(index == 2) {
+                sol.put("positionCounter", -1);
+                sol.put("value", 1);
+                sol.put("self_count", 4);
+            }
+            if(index == 3) {
+                sol.put("positionCounter", 0);
+                sol.put("value", 0);
+                sol.put("self_count", 3);
+            }
+            if(index == 4) {
+                sol.put("positionCounter", 1);
+                sol.put("value", 1);
+                sol.put("self_count", 2);
+            }
+            if(index == 5) {
+                sol.put("positionCounter", 2);
+                sol.put("value", 0);
+                sol.put("self_count", 1);
+            }
+            if(index == 6) {
+                sol.put("positionCounter", -1);
+                sol.put("value", 0);
+                sol.put("self_count", 4);
+            }
+            if(index == 7) {
+                sol.put("positionCounter", 0);
+                sol.put("value", 1);
+                sol.put("self_count", 3);
+            }
+        }
+
+        HashMap first_sol = targetSols.get(0);
+        first_sol.put("targetSolenoid", 0);
+        first_sol.put("targetPositionCounter", 1);
+
+        int prevPosCounter = 1;
+
+        // Target sols array analysis
+        for(int i=1; i<line.length(); i++) {
+            HashMap curSol = targetSols.get(i);
+            int parsedInt = Integer.parseInt(String.valueOf(line.charAt(i)));
+            if(line.charAt(i-1) == '1' && line.charAt(i) == '1' && prevPosCounter < 1) {
+                curSol.put("targetSolenoid", i-1);
+                curSol.put("targetPositionCounter", prevPosCounter + SUCCESSIVE_ONES_GAP_IN_MILLIMETER);
+                curSol.put("targetValue", parsedInt);
+                prevPosCounter += SUCCESSIVE_ONES_GAP_IN_MILLIMETER;
+            }else if (line.charAt(i-1) == '1' && line.charAt(i) == '1' && prevPosCounter >= 1 && prevPosCounter <= 2) {
+                curSol.put("targetSolenoid", i);
+                curSol.put("targetPositionCounter", (prevPosCounter + SUCCESSIVE_ONES_GAP_IN_MILLIMETER) / 4);
+                curSol.put("targetValue", parsedInt);
+                prevPosCounter = (prevPosCounter + SUCCESSIVE_ONES_GAP_IN_MILLIMETER) / 4;
+            }else if(line.charAt(i-1) == '0' && line.charAt(i) == '1') {
+                curSol.put("targetPositionCounter", prevPosCounter);
+                curSol.put("targetSolenoid", i);
+                curSol.put("targetValue", parsedInt);
+            }else if(line.charAt(i-1) == '1' && line.charAt(i) == '0') {
+                curSol.put("targetPositionCounter", prevPosCounter);
+                curSol.put("targetSolenoid", i);
+                curSol.put("targetValue", parsedInt);
+            }else if(line.charAt(i-1) == '0' && line.charAt(i) == '0') {
+                curSol.put("targetPositionCounter", prevPosCounter);
+                curSol.put("targetSolenoid", i);
+                curSol.put("targetValue", parsedInt);
+            }
+        }
+
+        int resultLength = 0;
+
+        while(resultLength < line.length()) {
+            for(int i=0; i<line.length(); i++) {
+                HashMap currentSol = solenoids.get(i);
+                HashMap currentTarget = targetSols.get(i);
+
+                int curPosCounter = (int) currentSol.get("positionCounter");
+                int curTargetPosCounter = (int) currentTarget.get("targetPositionCounter");
+
+                int curValue = (int) currentSol.get("value");
+                int curTargetValue = (int) currentTarget.get("targetValue");
+
+                if(curPosCounter == curTargetPosCounter && curValue == curTargetValue) {
+                    driver.fire(i);
+                    resultLength++;
+                }
+            }
+
+            driver.step();
+
+            for(int i=0; i<solenoids.size(); i++) {
+                HashMap currentSol = solenoids.get(i);
+                int counter = (int) currentSol.get("positionCounter");
+                int cur_value = (int) currentSol.get("value");
+                int cur_self_count = (int) currentSol.get("self_count");
+
+                if(counter == -1) {
+                    currentSol.put("positionCounter", 2);
+                }else {
+                    currentSol.put("positionCounter", counter - 1);
+                }
+
+                if(cur_self_count == 4) {
+                    currentSol.put("self_count", 1);
+                    currentSol.put("value", cur_value ^ 1);
+                }else{
+                    currentSol.put("self_count", cur_self_count + 1);
+                }
+            }
+        }
+
+        return line;
     }
 }

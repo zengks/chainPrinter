@@ -30,9 +30,10 @@ public interface Printer {
     /**
      * Prints a string using proportional-spacing.
      *
-     * @param line  A string containing '0', '1' and ' ' characters.
-     *              Other characters are left blank.
-     *              The string is truncated to the line width.
+     * @param line A string containing '0', '1' and ' ' characters.
+     *             Other characters are left blank.
+     *             The string is truncated to the line width.
+     * @return
      */
-    void pprintln(String line);
+    String pprintln(String line);
 }

@@ -5,6 +5,7 @@ package com.kardium.exams.printer;
  */
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Fill out this class to implement the {@link Printer} interface.
@@ -106,12 +107,13 @@ public class ChainPrinter implements Printer {
                d_line.append('0');
            }
        }
-       System.out.println(d_line.toString());
        println(d_line.toString());
     }
 
     @Override
     public String pprintln(String line) {
+
+        int[] result = new int[line.length()];
 
         ArrayList<HashMap> solenoids = new ArrayList<>();
         ArrayList<HashMap> targetSols = new ArrayList<>();
@@ -215,6 +217,7 @@ public class ChainPrinter implements Printer {
         int resultLength = 0;
 
         while(resultLength < line.length()) {
+
             for(int i=0; i<line.length(); i++) {
                 HashMap currentSol = solenoids.get(i);
                 HashMap currentTarget = targetSols.get(i);
@@ -228,7 +231,12 @@ public class ChainPrinter implements Printer {
                 if(curPosCounter == curTargetPosCounter && curValue == curTargetValue) {
                     driver.fire(i);
                     resultLength++;
+                    result[i] = curValue;
                 }
+            }
+
+            if(resultLength == line.length()) {
+                break;
             }
 
             driver.step();
@@ -254,6 +262,10 @@ public class ChainPrinter implements Printer {
             }
         }
 
-        return line;
+        if(resultLength == line.length()) {
+            driver.linefeed();
+        }
+
+        return Arrays.stream(result).mapToObj(String::valueOf).collect(Collectors.joining(""));
     }
 }
